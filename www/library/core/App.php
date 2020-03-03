@@ -11,7 +11,7 @@ class App {
 
     function __construct() {
 
-        $path = explode('/', $_REQUEST['url']);
+        $path = explode('/', isset($_REQUEST['url']) ? $_REQUEST['url'] : '');
         $this->_controller = array_shift($path);
         $this->_action = array_shift($path);
 
@@ -25,12 +25,12 @@ class App {
 
     public function getController(): string {
 
-        return $this->_controller;
+        return $this->_controller ? $this->_controller : 'index';
     }
 
     public function getAction(): string {
 
-        return $this->_action;
+        return $this->_action ? $this->_action : 'index';
     }
 
     public function getParams(): array {
@@ -45,6 +45,21 @@ class App {
 
     public function run(): void {
 
+        $nome_controller = ucfirst($this->getController()) . 'Controller';
+        $caminho_controller = 'controllers/' . $nome_controller . '.php';
+        if (!file_exists($caminho_controller)) die('404!');
 
+        require_once $caminho_controller;
+        $nome_controller = 'controllers\\' . $nome_controller;
+        $instancia_controller = new $nome_controller();
+        $nome_action = strtolower($this->getAction()) . 'Action';
+        if (!method_exists($instancia_controller, $nome_action)) die('404!');
+
+        $instancia_controller->$nome_action();
+        
+        $caminho_view = 'views/' . $this->getController() . '/' . $this->getAction() . '.phtml';
+        if (!file_exists($caminho_view)) die('404!');
+
+        $instancia_controller->getView()->render($caminho_view);
     }
 }
