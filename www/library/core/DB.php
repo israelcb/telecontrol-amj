@@ -2,7 +2,7 @@
 
 namespace library\core;
 
-class DB extends \PDO {
+abstract class DB extends \PDO {
 
     function __construct() {
 
