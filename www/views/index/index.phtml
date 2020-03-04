@@ -10,15 +10,20 @@
                             <div class="col-11">
                                 <h4 class="card-title">
                                     Fornecedores
-                                    <small>(responsáveis pelo fornecimento das peças para reparo)</small>
+                                    <small>(responsáveis pelo fornecimento das peças utilizadas nos reparos)</small>
                                 </h4>
                             </div>
                             <div class="col-1 text-right">
-                                <button class="btn btn-success font-weight-bold pull-right">+</button>
+                                <button type="button" id="btn-cadastro" class="btn btn-success font-weight-bold pull-right" onclick="trocarParaCadastro()">
+                                    <i class="fa fa-plus"></i>
+                                </button>
+                                <button type="button" id="btn-listagem" class="btn btn-info font-weight-bold pull-right" onclick="trocarParaListagem()" hidden>
+                                    <i class="fa fa-list"></i>
+                                </button>
                             </div>
                         </div>
                     </div>
-                    <div class="card-block">
+                    <div class="card-block" id="listagem">
                         <table class="table table-bordered m-0">
                             <thead>
                                 <tr>
@@ -26,34 +31,155 @@
                                     <th scope="col">CNPJ</th>
                                     <th scope="col">Razão Social</th>
                                     <th scope="col">Contratos</th>
+                                    <th class="text-center" scope="col">Ações</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <th scope="row">1</th>
-                                    <td>Mark</td>
-                                    <td>Otto</td>
-                                    <td>0 Contratos</td>
-                                </tr>
-                                    <tr>
-                                    <th scope="row">2</th>
-                                    <td>Jacob</td>
-                                    <td>Thornton</td>
-                                    <td>0 Contratos</td>
-                                </tr>
-                                <tr>
-                                    <th scope="row">3</th>
-                                    <td>Larry</td>
-                                    <td>the Bird</td>
-                                    <td>0 Contratos</td>
-                                </tr>
+                                <?php foreach ($this->fornecedores as $fornecedor): ?>
+                                    <tr class="linha-fornecedor">
+                                        <th scope="row"><?=$fornecedor['id_fornecedor']?></th>
+                                        <td><?=$fornecedor['cnpj']?></td>
+                                        <td><?=$fornecedor['razao_social']?></td>
+                                        <td>
+                                            <?php
+                                                $numero_contratos = $fornecedor['numero_contratos'];
+
+                                                if ($numero_contratos == 0) echo "Nenhum Contrato";
+                                                elseif ($numero_contratos == 1) echo "1 Contrato";
+                                                else echo "$numero_contratos Contratos";
+                                            ?>
+                                        </td>
+                                        <td></td>
+                                    </tr>
+                                <?php endforeach; ?>
                             </tbody>
                         </table>
+                    </div>
+                    <div class="card-body" id="cadastro" hidden>
+                        <form action="#" onsubmit="return cadastrarFornecedor(event, '<?=BASE_URL?>/fornecedor/cadastro')" id="formulario_cadastro_fornecedor">
+                            <div class="row form-group">
+                                <div class="col-12">
+                                    <label for="cnpj">CNPJ da empresa</label>
+                                    <input type="text" class="form-control" name="cnpj" id="campo_cnpj" placeholder="Formatos: xx.xxx.xxx/xxxx, xx.xxx.xxx/xxxx-xx" required autofocus maxlength="18">
+                                </div>
+                            </div>
+                            <div class="row form-group">
+                                <div class="col-12">
+                                    <label for="razao_social">Razão social da empresa</label>
+                                    <input type="text" class="form-control" name="razao_social" id="campo_razao_social" placeholder="Razão Social é o nome de registro da empresa" required maxlength="255">
+                                </div>
+                            </div>
+                            <div class="row form-group">
+                                <div class="col-12">
+                                    <label for="fantasia">Nome fantasia da empresa</label>
+                                    <input type="text" class="form-control" name="fantasia" id="campo_razao_social" placeholder="Nome Fantasia é o nome popular da empresa" required maxlength="255">
+                                </div>
+                            </div>
+                            <div class="row form-group">
+                                <div class="col-12">
+                                    <button type="submit" class="btn btn-success w-100 mt-2" id="botao_envio">
+                                        <i class="fa fa-floppy-o"></i> Cadastrar Fornecedor
+                                    </button>
+                                    <button type="reset" class="btn btn-warning w-100 mt-2" onclick="focarCampoCNPJ()" id="botao_limpar">
+                                        <i class="fa fa-trash"></i> Limpar Dados
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </section>
+
+<script type="text/javascript">
+
+    const trocarParaCadastro = () => {
+
+        document.getElementById('listagem').hidden = true;
+        document.getElementById('cadastro').hidden = false;
+
+        document.getElementById('btn-listagem').hidden = false;
+        document.getElementById('btn-cadastro').hidden = true;
+    };
+
+    const trocarParaListagem = () => {
+
+        document.getElementById('listagem').hidden = false;
+        document.getElementById('cadastro').hidden = true;
+
+        document.getElementById('btn-listagem').hidden = true;
+        document.getElementById('btn-cadastro').hidden = false;
+    };
+
+    trocarParaCadastro()
+
+    let numeroRegistros = document.getElementsByClassName('linha-fornecedor').length;
+    if (numeroRegistros === 0) trocarParaCadastro();
+</script>
+
+<script type="text/javascript">
+
+    $("#campo_cnpj").on("keyup", function(e) {
+        $(this).val(
+            $(this).val()
+            .replace(/[^0-9\.\/-]/g, '')
+            .replace(/^(\d{2})(\d)/,"$1.$2")
+            .replace(/^(\d{2})\.(\d{3})(\d)/,"$1.$2.$3")
+            .replace(/\.(\d{3})(\d)/,".$1/$2")
+            .replace(/(\d{4})(\d)/,"$1-$2")
+        );
+    });
+
+    const focarCampoCNPJ = () => {
+
+        document.getElementById('campo_cnpj').focus();
+    };
+</script>
+
+<script type="text/javascript">
+
+    const atualizarInativacaoBotoes = (estado = false) => {
+
+        document.getElementById('botao_envio').disabled = estado;
+        document.getElementById('botao_limpar').disabled = estado;
+    };
+
+    const cadastrarFornecedor = (event, url) => {
+
+        event.preventDefault();
+
+        let xhr = new XMLHttpRequest();
+        xhr.open('POST', url);
+        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+
+        xhr.onreadystatechange = function() {
+            if (this.readyState === XMLHttpRequest.DONE) {
+
+                if (this.status === 200) {
+                    
+                    return Swal.fire(
+                        'Sucesso!!',
+                        'Um novo fornecedor foi cadastrado no sistema!',
+                        'success'
+                    )
+                    .then(() => window.location.href = window.location.href);
+                }
+
+                Swal.fire(
+                    'Ops',
+                    'Parece que alguns campos foram preenchidos incorretamente...',
+                    'error'
+                )
+                .then(() => atualizarInativacaoBotoes(false))
+                .catch(() => atualizarInativacaoBotoes(false));
+            }
+        }
+
+        xhr.send('');
+        atualizarInativacaoBotoes(true);
+    };
+</script>
 
 <?php include 'templates/footer.phtml'; ?>

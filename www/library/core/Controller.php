@@ -7,15 +7,15 @@ use library\core\controller\ViewRenderer;
 
 class Controller {
 
-    private $_view;
+    protected $view;
 
     function __construct() {
         
-        $this->_view = new ViewRenderer();
+        $this->view = new ViewRenderer();
     }
 
     public function getView(): ViewRenderer {
 
-        return $this->_view;
+        return $this->view;
     }
 }
