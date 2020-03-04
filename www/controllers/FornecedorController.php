@@ -41,7 +41,7 @@ class FornecedorController extends Controller {
             }
             catch (\PDOException $e) {
 
-                if ($e->getCode() === 23505) {
+                if ($e->getCode() == 23505) {
 
                     http_response_code(409);
                     $resposta = array('erros' => ['cnpj_existente']);
@@ -54,8 +54,11 @@ class FornecedorController extends Controller {
             }
             finally {
 
-                http_response_code(201);
-                $resposta = array('mensagem' => 'sucesso');
+                if (empty($resposta)) {
+
+                    http_response_code(201);
+                    $resposta = array('mensagem' => 'sucesso');
+                }
             }
         }
 

@@ -60,7 +60,7 @@
                             <div class="row form-group">
                                 <div class="col-12">
                                     <label for="cnpj">CNPJ da empresa</label>
-                                    <input type="text" class="form-control" name="cnpj" id="campo_cnpj" placeholder="Formatos: xx.xxx.xxx/xxxx, xx.xxx.xxx/xxxx-xx" required autofocus maxlength="18">
+                                    <input type="text" class="form-control" name="cnpj" id="campo_cnpj" placeholder="Formatos: xx.xxx.xxx/xxxx, xx.xxx.xxx/xxxx-xx" required autofocus maxlength="17">
                                     <small class="text-danger" id="erro_cnpj_nao_informado" hidden>Forneça o CNPJ do fornecedor</small>
                                     <small class="text-danger" id="erro_cnpj_invalido" hidden>O CNPJ informado não é válido</small>
                                 </div>
@@ -174,6 +174,7 @@
             if (this.readyState === XMLHttpRequest.DONE) {
 
                 atualizarInativacaoBotoes(false);
+                reiniciarMarcacaoErrosCampos();
 
                 if (this.status === 201) {
 
@@ -193,8 +194,6 @@
                         'warning'
                     );
                 }
-
-                reiniciarMarcacaoErrosCampos();
 
                 let { erros } = JSON.parse(xhr.response);
 
