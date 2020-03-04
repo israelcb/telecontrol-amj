@@ -61,18 +61,22 @@
                                 <div class="col-12">
                                     <label for="cnpj">CNPJ da empresa</label>
                                     <input type="text" class="form-control" name="cnpj" id="campo_cnpj" placeholder="Formatos: xx.xxx.xxx/xxxx, xx.xxx.xxx/xxxx-xx" required autofocus maxlength="18">
+                                    <small class="text-danger" id="erro_cnpj_nao_informado" hidden>Forneça o CNPJ do fornecedor</small>
+                                    <small class="text-danger" id="erro_cnpj_invalido" hidden>O CNPJ informado não é válido</small>
                                 </div>
                             </div>
                             <div class="row form-group">
                                 <div class="col-12">
                                     <label for="razao_social">Razão social da empresa</label>
                                     <input type="text" class="form-control" name="razao_social" id="campo_razao_social" placeholder="Razão Social é o nome de registro da empresa" required maxlength="255">
+                                    <small class="text-danger" id="erro_razao_social_nao_informada" hidden>Forneça a razão social do fornecedor</small>
                                 </div>
                             </div>
                             <div class="row form-group">
                                 <div class="col-12">
                                     <label for="fantasia">Nome fantasia da empresa</label>
                                     <input type="text" class="form-control" name="fantasia" id="campo_fantasia" placeholder="Nome Fantasia é o nome popular da empresa" required maxlength="255">
+                                    <small class="text-danger" id="erro_nome_fantasia_nao_informado" hidden>Forneça o nome fantasia do fornecedor</small>
                                 </div>
                             </div>
                             <div class="row form-group">
@@ -80,7 +84,7 @@
                                     <button type="submit" class="btn btn-success w-100 mt-2" id="botao_envio">
                                         <i class="fa fa-floppy-o"></i> Cadastrar Fornecedor
                                     </button>
-                                    <button type="reset" class="btn btn-warning w-100 mt-2" onclick="focarCampoCNPJ()" id="botao_limpar">
+                                    <button type="reset" class="btn btn-warning w-100 mt-2" onclick="reiniciarFormulario()" id="botao_limpar">
                                         <i class="fa fa-trash"></i> Limpar Dados
                                     </button>
                                 </div>
@@ -113,8 +117,6 @@
         document.getElementById('btn-cadastro').hidden = false;
     };
 
-    trocarParaCadastro()
-
     let numeroRegistros = document.getElementsByClassName('linha-fornecedor').length;
     if (numeroRegistros === 0) trocarParaCadastro();
 </script>
@@ -132,9 +134,10 @@
         );
     });
 
-    const focarCampoCNPJ = () => {
+    const reiniciarFormulario = () => {
 
         document.getElementById('campo_cnpj').focus();
+        reiniciarMarcacaoErrosCampos();
     };
 </script>
 
@@ -146,6 +149,18 @@
         document.getElementById('botao_limpar').disabled = estado;
     };
 
+    const reiniciarMarcacaoErrosCampos = () => {
+
+        document.getElementById('campo_cnpj').classList.remove('is-invalid');
+        document.getElementById('campo_razao_social').classList.remove('is-invalid');
+        document.getElementById('campo_fantasia').classList.remove('is-invalid');
+
+        document.getElementById('erro_cnpj_nao_informado').hidden = true;
+        document.getElementById('erro_cnpj_invalido').hidden = true;
+        document.getElementById('erro_razao_social_nao_informada').hidden = true;
+        document.getElementById('erro_nome_fantasia_nao_informado').hidden = true;
+    }
+
     const cadastrarFornecedor = (event, url) => {
 
         event.preventDefault();
@@ -154,21 +169,21 @@
         xhr.open('POST', url);
         xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
 
-        xhr.onreadystatechange = function(...args) {
+        xhr.onreadystatechange = function() {
 
-            console.log(this.readyState, XMLHttpRequest.DONE, args)
             if (this.readyState === XMLHttpRequest.DONE) {
 
                 atualizarInativacaoBotoes(false);
 
                 if (this.status === 201) {
-                    
+
                     return Swal.fire(
                         'Sucesso!!',
                         'Um novo fornecedor foi cadastrado no sistema!',
                         'success'
                     )
-                    .then(() => window.location.href = window.location.href);
+                    .then(() => location.reload())
+                    .catch(() => location.reload());
                 }
                 else if (this.status === 409) {
 
@@ -179,6 +194,37 @@
                     );
                 }
 
+                reiniciarMarcacaoErrosCampos();
+
+                let { erros } = JSON.parse(xhr.response);
+
+                let erroCnpjNaoInformado = erros.indexOf('cnpj_nao_informado') !== -1;
+                let erroCnpjInvalido = erros.indexOf('cnpj_invalido') !== -1;
+                let erroRazaoSocialNaoInformada = erros.indexOf('razao_social_nao_informada') !== -1;
+                let erroNomeFantasiaNaoInformado = erros.indexOf('nome_fantasia_nao_informado') !== -1;
+
+                if (erroCnpjNaoInformado || erroCnpjInvalido) {
+
+                    document.getElementById('campo_cnpj').classList.add('is-invalid');
+
+                    if (erroCnpjInvalido)
+                        document.getElementById('erro_cnpj_invalido').hidden = false;
+                    else
+                        document.getElementById('erro_cnpj_nao_informado').hidden = false;
+                }
+
+                if (erroNomeFantasiaNaoInformado) {
+
+                    document.getElementById('campo_fantasia').classList.add('is-invalid');
+                    document.getElementById('erro_nome_fantasia_nao_informado').hidden = false;
+                }
+
+                if (erroRazaoSocialNaoInformada) {
+
+                    document.getElementById('campo_razao_social').classList.add('is-invalid');
+                    document.getElementById('erro_razao_social_nao_informada').hidden = false;
+                }
+
                 Swal.fire(
                     'Ops',
                     'Parece que alguns campos foram preenchidos incorretamente...',
@@ -187,7 +233,11 @@
             }
         }
 
-        xhr.send('');
+        xhr.send(
+            'cnpj=' + document.getElementById('campo_cnpj').value +
+            '&razao_social=' + document.getElementById('campo_razao_social').value +
+            '&fantasia=' + document.getElementById('campo_fantasia').value
+        );
         atualizarInativacaoBotoes(true);
     };
 </script>
