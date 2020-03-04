@@ -11,15 +11,15 @@ class App {
 
     function __construct() {
 
-        $path = explode('/', isset($_REQUEST['url']) ? $_REQUEST['url'] : '');
+        $path = explode('/', $_REQUEST['url'] ?? '');
         $this->_controller = array_shift($path);
         $this->_action = array_shift($path);
 
-        $this->_params = [];
+        $this->_params = $_POST;
         while (count($path) > 0)
             $this->_params[array_shift($path)] = array_shift($path);
 
-        $this->_filtros = $_REQUEST;
+        $this->_filtros = $_GET;
         unset($this->_filtros['url']);
     }
 
@@ -51,7 +51,7 @@ class App {
 
         require_once $caminho_controller;
         $nome_controller = 'controllers\\' . $nome_controller;
-        $instancia_controller = new $nome_controller();
+        $instancia_controller = new $nome_controller($this);
         $nome_action = strtolower($this->getAction()) . 'Action';
         if (!method_exists($instancia_controller, $nome_action)) die('404!');
 

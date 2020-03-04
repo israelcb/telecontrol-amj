@@ -27,4 +27,12 @@ class Fornecedor extends DB {
                 erp.fornecedor fornec
         ")->fetchAll(\PDO::FETCH_ASSOC);
     }
+
+    public function insert($cnpj, $razao_social, $nome_fantasia) {
+
+        return $this->prepare("
+            INSERT INTO erp.fornecedor (cnpj, razao_social, nome_fantasia)
+            VALUES (?,?,?)
+        ")->execute([$cnpj, $razao_social, $nome_fantasia]);
+    }
 }

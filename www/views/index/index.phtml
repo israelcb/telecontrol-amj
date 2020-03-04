@@ -72,7 +72,7 @@
                             <div class="row form-group">
                                 <div class="col-12">
                                     <label for="fantasia">Nome fantasia da empresa</label>
-                                    <input type="text" class="form-control" name="fantasia" id="campo_razao_social" placeholder="Nome Fantasia é o nome popular da empresa" required maxlength="255">
+                                    <input type="text" class="form-control" name="fantasia" id="campo_fantasia" placeholder="Nome Fantasia é o nome popular da empresa" required maxlength="255">
                                 </div>
                             </div>
                             <div class="row form-group">
@@ -154,10 +154,14 @@
         xhr.open('POST', url);
         xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
 
-        xhr.onreadystatechange = function() {
+        xhr.onreadystatechange = function(...args) {
+
+            console.log(this.readyState, XMLHttpRequest.DONE, args)
             if (this.readyState === XMLHttpRequest.DONE) {
 
-                if (this.status === 200) {
+                atualizarInativacaoBotoes(false);
+
+                if (this.status === 201) {
                     
                     return Swal.fire(
                         'Sucesso!!',
@@ -166,14 +170,20 @@
                     )
                     .then(() => window.location.href = window.location.href);
                 }
+                else if (this.status === 409) {
+
+                    return Swal.fire(
+                        'Fornecedor existente',
+                        'Já existe um fornecedor cadastrado com este mesmo CNPJ no sistema',
+                        'warning'
+                    );
+                }
 
                 Swal.fire(
                     'Ops',
                     'Parece que alguns campos foram preenchidos incorretamente...',
                     'error'
-                )
-                .then(() => atualizarInativacaoBotoes(false))
-                .catch(() => atualizarInativacaoBotoes(false));
+                );
             }
         }
 

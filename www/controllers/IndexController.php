@@ -9,7 +9,7 @@ use models\Fornecedor;
 
 class IndexController extends Controller {
 
-    public function indexAction() {
+    public function indexAction(): void {
 
         $model = new Fornecedor();
         $this->view->fornecedores = $model->selectAll();

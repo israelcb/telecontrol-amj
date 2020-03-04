@@ -15,6 +15,7 @@ abstract class DB extends \PDO {
                 ';user=' . SGBD_USER .
                 ';password=' . SGBD_PASS
             );
+            $this->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
         }
         catch (\PDOException $e) {
 
