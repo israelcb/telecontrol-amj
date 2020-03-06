@@ -38,7 +38,11 @@ class App {
         $instancia_controller->setParamsHash($this->_params);
         $instancia_controller->setFiltersHash($this->_filters);
 
-        try { $instancia_controller->$nome_action(); }
+        try {
+
+            $instancia_controller->$nome_action();
+            $instancia_controller->getErrorHandler()->handle();
+        }
         catch(AmjException $e) {
 
             http_response_code($e->getCode());
@@ -50,7 +54,7 @@ class App {
         if (!file_exists($caminho_view)) {
 
             http_response_code(200);
-            die('Sucesso!');
+            die('{ "mensagem": "Sucesso!" }');
         }
 
         $instancia_controller->getViewRenderer()->render($caminho_view);

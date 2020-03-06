@@ -19,7 +19,7 @@ class FornecedorController extends Controller {
     public function cadastroAction(
         $cnpj = 'cnpj',
         $razao_social = 'razao_social',
-        $nome_fantasia = 'nome_fantasia'
+        $nome_fantasia = 'fantasia'
     ): void {
 
         $this->getParams()
