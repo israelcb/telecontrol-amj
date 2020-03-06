@@ -43,4 +43,16 @@ class Fornecedor extends DB {
             WHERE id_fornecedor = ?
         ")->execute([$id_fornecedor]);
     }
+
+    public function update($id_fornecedor, $cnpj, $razao_social, $nome_fantasia) {
+
+        return $this->prepare("
+            UPDATE erp.fornecedor SET
+                cnpj = ?,
+                razao_social = ?,
+                nome_fantasia = ?
+            WHERE
+                id_fornecedor = ?
+        ")->execute([$cnpj, $razao_social, $nome_fantasia, $id_fornecedor]);
+    }
 }

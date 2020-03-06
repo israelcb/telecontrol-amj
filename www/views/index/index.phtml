@@ -49,14 +49,32 @@
                                                 else echo "$numero_contratos Contratos";
                                             ?>
                                         </td>
-                                        <td></td>
+
+                                        <?php $json_fornecedor = str_replace('"', "'", json_encode($fornecedor)); ?>
+                                        <td class="p-2 text-center">
+                                            <button type="button" class="btn btn-sm btn-outline-warning" onclick="entrarParaAtualizarFornecedor(<?=$json_fornecedor?>)">
+                                                <i class="fa fa-pencil"></i> Atualizar
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="excluirFornecedor('<?=BASE_URL?>/fornecedor/exclusao/fornecedor/<?=$fornecedor['id_fornecedor']?>', <?=$json_fornecedor?>)">
+                                                <i class="fa fa-trash"></i> Excluir
+                                            </button>
+                                        </td>
                                     </tr>
                                 <?php endforeach; ?>
                             </tbody>
                         </table>
                     </div>
                     <div class="card-body" id="cadastro" hidden>
-                        <form action="#" onsubmit="return cadastrarFornecedor(event, '<?=BASE_URL?>/fornecedor/cadastro')" id="formulario_cadastro_fornecedor">
+                        <form
+                            action="#"
+                            onsubmit="
+                                return enviarFormulario(event, {
+                                    urlCadastro: '<?=BASE_URL?>/fornecedor/cadastro',
+                                    urlAtualizacao: '<?=BASE_URL?>/fornecedor/atualizacao/fornecedor/<?=$fornecedor['id_fornecedor']?>'
+                                })
+                            "
+                            id="formulario_cadastro_fornecedor"
+                        >
                             <div class="row form-group">
                                 <div class="col-12">
                                     <label for="cnpj">CNPJ da empresa</label>
@@ -79,13 +97,23 @@
                                     <small class="text-danger" id="erro_nome_fantasia_nao_informado" hidden>Forneça o nome fantasia do fornecedor</small>
                                 </div>
                             </div>
-                            <div class="row form-group">
+                            <div class="row form-group" id="btns-cadastro">
                                 <div class="col-12">
                                     <button type="submit" class="btn btn-success w-100 mt-2" id="botao_envio">
                                         <i class="fa fa-floppy-o"></i> Cadastrar Fornecedor
                                     </button>
                                     <button type="reset" class="btn btn-warning w-100 mt-2" onclick="reiniciarFormulario()" id="botao_limpar">
                                         <i class="fa fa-trash"></i> Limpar Dados
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="row form-group" id="btns-atualizacao" hidden>
+                                <div class="col-12">
+                                    <button type="submit" class="btn btn-warning w-100 mt-2" id="botao_atualizacao">
+                                        <i class="fa fa-floppy-o"></i> Atualizar Fornecedor
+                                    </button>
+                                    <button type="button" class="btn btn-danger w-100 mt-2" onclick="cancelarAtualizacao()" id="botao_cancelar_atualizacao">
+                                        <i class="fa fa-times"></i> Cancelar
                                     </button>
                                 </div>
                             </div>
@@ -98,6 +126,8 @@
 </section>
 
 <script type="text/javascript">
+
+    let fornecedorAtualizacao = null;
 
     const trocarParaCadastro = () => {
 
@@ -147,6 +177,8 @@
 
         document.getElementById('botao_envio').disabled = estado;
         document.getElementById('botao_limpar').disabled = estado;
+        document.getElementById('botao_atualizacao').disabled = estado;
+        document.getElementById('botao_cancelar_atualizacao').disabled = estado;
     };
 
     const reiniciarMarcacaoErrosCampos = () => {
@@ -161,9 +193,7 @@
         document.getElementById('erro_nome_fantasia_nao_informado').hidden = true;
     }
 
-    const cadastrarFornecedor = (event, url) => {
-
-        event.preventDefault();
+    const cadastrarFornecedor = (url) => {
 
         let xhr = new XMLHttpRequest();
         xhr.open('POST', url);
@@ -176,7 +206,7 @@
                 atualizarInativacaoBotoes(false);
                 reiniciarMarcacaoErrosCampos();
 
-                if (this.status === 201) {
+                if (this.status === 200) {
 
                     return Swal.fire(
                         'Sucesso!!',
@@ -239,6 +269,193 @@
         );
         atualizarInativacaoBotoes(true);
     };
+</script>
+
+<script type="text/javascript">
+
+    const excluirFornecedor = (url, { cnpj, razao_social: razaoSocial }) => {
+
+        Swal.fire({
+            title: 'Excluir fornecedor',
+            html: 'Deseja realmente excluir o fornecedor <p><b>' + razaoSocial + ' (' + cnpj + ')</b>?</p>',
+            icon: 'question',
+            showCancelButton: true,
+            customClass: {
+                confirmButton: 'btn btn-success m-2',
+                cancelButton: 'btn btn-danger m-2'
+            },
+            buttonsStyling: false,
+            confirmButtonText: '<i class="fa fa-check"></i> Sim, exclua',
+            cancelButtonText: '<i class="fa fa-times"></i> Não, volte',
+        })
+        .then((res) => {
+
+            if (!res.value) return;
+            
+            let xhr = new XMLHttpRequest();
+            xhr.open('DELETE', url);
+
+            xhr.onreadystatechange = function() {
+
+                if (this.readyState === XMLHttpRequest.DONE) {
+
+                    if (this.status === 200) {
+
+                        Swal.fire(
+                            'Sucesso!',
+                            'O fornecedor foi excluído com sucesso!',
+                            'success'
+                        )
+                        .then(() => location.reload())
+                        .catch(() => location.reload());
+                    }
+                    else if (this.status === 409) {
+
+                        Swal.fire(
+                            'Não permitido!',
+                            'Não é permitido excluir fornecedores com responsáveis atribuídos!',
+                            'error'
+                        );
+                    }
+                }
+            };
+
+            xhr.send();
+        });
+    };
+</script>
+
+<script type="text/javascript">
+
+    const inicializarAtualizacao = fornecedor => {
+
+        let { cnpj, razao_social: razaoSocial, nome_fantasia: nomeFantasia } = fornecedor;
+
+        fornecedorAtualizacao = fornecedor;
+
+        reiniciarMarcacaoErrosCampos();
+        document.getElementById('btn-listagem').hidden = true;
+
+        document.getElementById('campo_cnpj').value = cnpj;
+        document.getElementById('campo_razao_social').value = razaoSocial;
+        document.getElementById('campo_fantasia').value = nomeFantasia;
+    };
+
+    const entrarParaAtualizarFornecedor = (dadosFornecedor) => {
+
+        trocarParaCadastro();
+        document.getElementById('btns-atualizacao').hidden = false;
+        document.getElementById('btns-cadastro').hidden = true;
+        inicializarAtualizacao(dadosFornecedor);
+    };
+
+    const cancelarAtualizacao = () => {
+
+        fornecedorAtualizacao = null;
+
+        document.getElementById('btn-listagem').hidden = false;
+
+        document.getElementById('btns-cadastro').hidden = false;
+        document.getElementById('btns-atualizacao').hidden = true;
+
+        reiniciarMarcacaoErrosCampos();
+        document.getElementById('btn-listagem').hidden = true;
+
+        document.getElementById('campo_cnpj').value = '';
+        document.getElementById('campo_razao_social').value = '';
+        document.getElementById('campo_fantasia').value = '';
+
+        trocarParaListagem();
+    }
+
+    const atualizarFornecedor = url => {
+
+        let xhr = new XMLHttpRequest();
+        xhr.open('POST', url);
+        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+
+        xhr.onreadystatechange = function() {
+
+            if (this.readyState === XMLHttpRequest.DONE) {
+
+                atualizarInativacaoBotoes(false);
+                reiniciarMarcacaoErrosCampos();
+
+                if (this.status === 200) {
+
+                    return Swal.fire(
+                        'Sucesso!!',
+                        'Os dados do fornecedor foram atualizados com sucesso!',
+                        'success'
+                    )
+                    .then(() => location.reload())
+                    .catch(() => location.reload());
+                }
+                else if (this.status === 409) {
+
+                    return Swal.fire(
+                        'Fornecedor existente',
+                        'Já existe um fornecedor cadastrado com este mesmo CNPJ no sistema',
+                        'warning'
+                    );
+                }
+
+                let { erro } = JSON.parse(xhr.response);
+
+                let erroCnpjNaoInformado = erro === 'cnpj_nao_informado';
+                let erroCnpjInvalido = erro === 'cnpj_invalido';
+                let erroRazaoSocialNaoInformada = erro === 'razao_social_nao_informada';
+                let erroNomeFantasiaNaoInformado = erro === 'nome_fantasia_nao_informado';
+
+                if (erroCnpjNaoInformado || erroCnpjInvalido) {
+
+                    document.getElementById('campo_cnpj').classList.add('is-invalid');
+
+                    if (erroCnpjInvalido)
+                        document.getElementById('erro_cnpj_invalido').hidden = false;
+                    else
+                        document.getElementById('erro_cnpj_nao_informado').hidden = false;
+                }
+
+                if (erroNomeFantasiaNaoInformado) {
+
+                    document.getElementById('campo_fantasia').classList.add('is-invalid');
+                    document.getElementById('erro_nome_fantasia_nao_informado').hidden = false;
+                }
+
+                if (erroRazaoSocialNaoInformada) {
+
+                    document.getElementById('campo_razao_social').classList.add('is-invalid');
+                    document.getElementById('erro_razao_social_nao_informada').hidden = false;
+                }
+
+                Swal.fire(
+                    'Ops',
+                    'Parece que alguns campos foram preenchidos incorretamente...',
+                    'error'
+                );
+            }
+        }
+
+        xhr.send(
+            'cnpj=' + document.getElementById('campo_cnpj').value +
+            '&razao_social=' + document.getElementById('campo_razao_social').value +
+            '&fantasia=' + document.getElementById('campo_fantasia').value
+        );
+        atualizarInativacaoBotoes(true);
+    }
+</script>
+
+<script type="text/javascript">
+
+    const enviarFormulario = (event, { urlCadastro, urlAtualizacao }) => {
+
+        event.preventDefault();
+
+        fornecedorAtualizacao === null
+        ? cadastrarFornecedor(urlCadastro)
+        : atualizarFornecedor(urlAtualizacao);
+    }
 </script>
 
 <?php include 'templates/footer.phtml'; ?>

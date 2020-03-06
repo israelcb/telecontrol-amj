@@ -16,11 +16,36 @@ use models\Fornecedor;
 
 class FornecedorController extends Controller {
 
-    public function cadastroAction(
+    public function cadastroAction(): void {
+
+        [ $cnpj, $razao_social, $nome_fantasia ] = $this->_tratarFormularioFornecedor();
+
+        try { (new Fornecedor())->insert($cnpj, $razao_social, $nome_fantasia); }
+        catch (\PDOException $e) { $this->getErrorHandler()->setError($e)->onUniqueViolation(Respostas::Conflito); }
+    }
+
+    public function exclusaoAction(): void {
+
+        [ $id_fornecedor ] = $this->_tratarConsultaFornecedor();
+
+        try { (new Fornecedor())->delete($id_fornecedor); }
+        catch (\PDOException $e) { $this->getErrorHandler()->setError($e)->onForeignKeyViolation(Respostas::Conflito); }
+    }
+
+    public function atualizacaoAction(): void {
+
+        [ $id_fornecedor ] = $this->_tratarConsultaFornecedor();
+        [ $cnpj, $razao_social, $nome_fantasia ] = $this->_tratarFormularioFornecedor();
+
+        try { (new Fornecedor())->update($id_fornecedor, $cnpj, $razao_social, $nome_fantasia); }
+        catch (\PDOException $e) { $this->getErrorHandler()->setError($e)->onUniqueViolation(Respostas::Conflito); }
+    }
+
+    private function _tratarFormularioFornecedor(
         $cnpj = 'cnpj',
         $razao_social = 'razao_social',
         $nome_fantasia = 'fantasia'
-    ): void {
+    ): array {
 
         $this->getParams()
         ->get($cnpj)
@@ -35,20 +60,18 @@ class FornecedorController extends Controller {
             ->validar(Validadores::CampoVazio, 'nome_fantasia_nao_informado')
         ;
 
-        try { (new Fornecedor())->insert($cnpj, $razao_social, $nome_fantasia); }
-        catch (\PDOException $e) { $this->getErrorHandler()->setError($e)->onUniqueViolation(Respostas::Conflito); }
+        return [ $cnpj, $razao_social, $nome_fantasia ];
     }
 
-    public function exclusaoAction(
+    private function _tratarConsultaFornecedor(
         $id_fornecedor = 'fornecedor'
-    ): void {
+    ): array {
 
         $this->getParams()
         ->get($id_fornecedor)
             ->validar(Validadores::CampoNumerico, 'identificacao_fornecedor_invalida')
         ;
 
-        try { (new Fornecedor())->delete($id_fornecedor); }
-        catch (\PDOException $e) { $this->getErrorHandler()->setError($e)->onForeignKeyViolation(Respostas::Conflito); }
+        return [ $id_fornecedor ];
     }
 }
