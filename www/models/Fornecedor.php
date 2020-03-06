@@ -35,4 +35,12 @@ class Fornecedor extends DB {
             VALUES (?,?,?)
         ")->execute([$cnpj, $razao_social, $nome_fantasia]);
     }
+
+    public function delete($id_fornecedor) {
+
+        return $this->prepare("
+            DELETE FROM erp.fornecedor
+            WHERE id_fornecedor = ?
+        ")->execute([$id_fornecedor]);
+    }
 }

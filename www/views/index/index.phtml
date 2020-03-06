@@ -195,12 +195,12 @@
                     );
                 }
 
-                let { erros } = JSON.parse(xhr.response);
+                let { erro } = JSON.parse(xhr.response);
 
-                let erroCnpjNaoInformado = erros.indexOf('cnpj_nao_informado') !== -1;
-                let erroCnpjInvalido = erros.indexOf('cnpj_invalido') !== -1;
-                let erroRazaoSocialNaoInformada = erros.indexOf('razao_social_nao_informada') !== -1;
-                let erroNomeFantasiaNaoInformado = erros.indexOf('nome_fantasia_nao_informado') !== -1;
+                let erroCnpjNaoInformado = erro === 'cnpj_nao_informado';
+                let erroCnpjInvalido = erro === 'cnpj_invalido';
+                let erroRazaoSocialNaoInformada = erro === 'razao_social_nao_informada';
+                let erroNomeFantasiaNaoInformado = erro === 'nome_fantasia_nao_informado';
 
                 if (erroCnpjNaoInformado || erroCnpjInvalido) {
 

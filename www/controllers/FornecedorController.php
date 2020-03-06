@@ -3,67 +3,52 @@
 namespace controllers;
 
 require_once 'library/core/Controller.php';
+require_once 'library/Formatadores.php';
+require_once 'library/Validadores.php';
+require_once 'library/Respostas.php';
 require_once 'models/Fornecedor.php';
+
 use library\core\Controller;
+use library\Formatadores;
+use library\Respostas;
+use library\Validadores;
 use models\Fornecedor;
 
 class FornecedorController extends Controller {
 
-    public function cadastroAction(): void {
+    public function cadastroAction(
+        $cnpj = 'cnpj',
+        $razao_social = 'razao_social',
+        $nome_fantasia = 'nome_fantasia'
+    ): void {
 
-        $params = $this->getApp()->getParams();
-        $cnpj = preg_replace('/[\/\.-]/', '', filter_var($params['cnpj'] ?? ''));
-        $razao_social = filter_var($params['razao_social'] ?? '');
-        $nome_fantasia = filter_var($params['fantasia'] ?? '');
+        $this->getParams()
+        ->get($cnpj)
+            ->formatar(Formatadores::LimparCNPJ)
+            ->validar(Validadores::CampoVazio, 'cnpj_nao_informado')
+            ->validar(Validadores::CNPJNumerico, 'cnpj_invalido')
 
-        $erros = [];
+        ->get($razao_social)
+            ->validar(Validadores::CampoVazio, 'razao_social_nao_informada')
+            
+        ->get($nome_fantasia)
+            ->validar(Validadores::CampoVazio, 'nome_fantasia_nao_informado')
+        ;
 
-        if (empty($cnpj)) array_push($erros, 'cnpj_nao_informado');
-        if (empty($razao_social)) array_push($erros, 'razao_social_nao_informada');
-        if (empty($nome_fantasia)) array_push($erros, 'nome_fantasia_nao_informado');
+        try { (new Fornecedor())->insert($cnpj, $razao_social, $nome_fantasia); }
+        catch (\PDOException $e) { $this->getErrorHandler()->setError($e)->onUniqueViolation(Respostas::Conflito); }
+    }
 
-        if (count($erros) === 0 && !preg_match('/^[0-9]{12,14}$/', $cnpj)) array_push($erros, 'cnpj_invalido');
+    public function exclusaoAction(
+        $id_fornecedor = 'fornecedor'
+    ): void {
 
-        $resposta = [];
+        $this->getParams()
+        ->get($id_fornecedor)
+            ->validar(Validadores::CampoNumerico, 'identificacao_fornecedor_invalida')
+        ;
 
-        if (count($erros) > 0) {
-
-            http_response_code(400);
-            $resposta = array('erros' => $erros);
-        }
-
-        else {
-
-            try {
-
-                $model = new Fornecedor();
-                $model->insert($cnpj, $razao_social, $nome_fantasia);
-            }
-            catch (\PDOException $e) {
-
-                if ($e->getCode() == 23505) {
-
-                    http_response_code(409);
-                    $resposta = array('erros' => ['cnpj_existente']);
-                }
-                else {
-
-                    http_response_code(500);
-                    $resposta = array('erros' => ['erro_interno']);
-                }
-            }
-            finally {
-
-                if (empty($resposta)) {
-
-                    http_response_code(201);
-                    $resposta = array('mensagem' => 'sucesso');
-                }
-            }
-        }
-
-        header('Content-Type', 'application/json');
-        echo json_encode($resposta);
-        exit;
+        try { (new Fornecedor())->delete($id_fornecedor); }
+        catch (\PDOException $e) { $this->getErrorHandler()->setError($e)->onForeignKeyViolation(Respostas::Conflito); }
     }
 }

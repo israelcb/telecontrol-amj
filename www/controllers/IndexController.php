@@ -11,7 +11,6 @@ class IndexController extends Controller {
 
     public function indexAction(): void {
 
-        $model = new Fornecedor();
-        $this->view->fornecedores = $model->selectAll();
+        $this->getViewRenderer()->fornecedores = (new Fornecedor())->selectAll();
     }
 }
