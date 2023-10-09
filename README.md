@@ -38,6 +38,7 @@ Marco em contato com alguns desses fornecedores teve a ideia de poder
 disponibilizar essas ordens de serviço para que eles as vissem, então seria um
 diferencial enorme se o sistema tivesse uma interface onde os fornecedores
 passariam alguns dados e receberiam as informações das ou da ordem de serviço.
+
 “Esse foi um descritivo breve que Joel anotou quando seu Agenor e Marco estavam
 conversando, será que conseguimos desenvolver algo para ele em 3 dias”?
 Para poder avaliar envie todo seu código juntamente com a estrutura do banco e
